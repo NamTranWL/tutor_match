@@ -4,8 +4,8 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
-import { User } from './users/schemas/user.schema';
-import { UsersModule } from './users/users.module';
+import { User } from './modules/users/schemas/user.schema';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
