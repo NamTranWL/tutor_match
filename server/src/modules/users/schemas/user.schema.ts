@@ -13,7 +13,7 @@ export class User extends BaseSchema {
   email: string;
 
   @Prop({ required: true })
-  passwordHash: string;
+  password: string;
 
   @Prop({
     required: true,

@@ -1,6 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { MongoIdParamDto } from './dto/mongo-id-param.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
@@ -13,8 +23,8 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll(@Query() query: Record<string, any>) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')
@@ -23,12 +33,16 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(@Param() { id }: MongoIdParamDto, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @Delete(':id')
+  async remove(@Param() { id }: MongoIdParamDto, @Query('hard') hard?: string) {
+    const isHard = ['1', 'true', 'yes'].includes((hard || '').toLowerCase());
+    return isHard
+      ? this.usersService.hardDelete(id)
+      : this.usersService.softDelete(id);
   }
 }
