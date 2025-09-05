@@ -112,6 +112,13 @@ export class UsersService {
     return `This action returns a #${id} user`;
   }
 
+  async findByEmail(email: string, withPassword = false) {
+    if (withPassword) {
+      return await this.userModel.findOne({ email }).select('+password');
+    }
+    return await this.userModel.findOne({ email });
+  }
+
   async update(id: string, dto: UpdateUserDto) {
     const updated = await this.userModel
       .findByIdAndUpdate(id, dto, { new: true, runValidators: true })

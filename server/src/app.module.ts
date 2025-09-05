@@ -4,8 +4,8 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
-import { User } from './modules/users/schemas/user.schema';
-import { UsersModule } from './modules/users/users.module';
+import { UsersModule } from '@/modules/users/users.module';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
   imports: [
@@ -29,6 +29,7 @@ import { UsersModule } from './modules/users/users.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
