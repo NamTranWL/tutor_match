@@ -29,6 +29,21 @@ export class User extends BaseSchema {
 
   @Prop({ enum: ['active', 'banned', 'pending'], default: 'active' })
   status: UserStatus;
+
+  @Prop({ default: false })
+  isActive: boolean;
+
+  @Prop({ type: String })
+  codeID?: string;
+
+  @Prop({ type: Date })
+  codeExpired?: Date;
+
+  @Prop({ default: 0 })
+  activationResendCount: number;
+
+  @Prop({ required: false })
+  lastActivationResendAt?: Date;
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index(

@@ -6,6 +6,7 @@ export interface SafeUser {
   avatar?: string;
   gender?: 'male' | 'female' | 'other';
   phone?: string;
+  isActive?: boolean;
 }
 
 export interface LoginResult {

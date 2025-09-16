@@ -11,11 +11,17 @@ import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { hashPasswordHelper, comparePasswords } from '@/helpers/util';
+import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import dayjs from 'dayjs';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private mailerService: MailerService,
+  ) {}
 
   async isEmailExists(email: string): Promise<boolean> {
     const user = await this.userModel.exists({ email });
@@ -44,9 +50,43 @@ export class UsersService {
     };
   }
 
+  async handleRegister(registerDto: CreateAuthDto) {
+    const { v4: uuidv4 } = await import('uuid');
+    const emailExist = await this.isEmailExists(registerDto.email);
+    if (emailExist) {
+      throw new BadRequestException(
+        `Email ${registerDto.email} already exists`,
+      );
+    }
+
+    //hash pash
+    const hashedPassword = await hashPasswordHelper(registerDto.password);
+    const codeID = uuidv4();
+    const newUser = await this.userModel.create({
+      email: registerDto.email,
+      role: registerDto.role,
+      password: hashedPassword,
+      codeID,
+      codeExpired: dayjs().add(1, 'day').toDate(),
+    });
+    this.mailerService.sendMail({
+      to: newUser.email, // list of receivers
+      subject:
+        'Chào mừng đến với TutorMatch! Vui lòng kích hoạt tài khoản của bạn', // Subject line
+      template: 'register',
+      context: {
+        name: newUser.email,
+        activationCode: newUser.codeID,
+      },
+    });
+
+    return {
+      _id: newUser._id,
+    };
+  }
+
   async findAll(query: any) {
     try {
-      // import ESM
       const { default: aqp } = await Function(
         'return import("api-query-params")',
       )();
@@ -78,8 +118,6 @@ export class UsersService {
       if (!includeDeleted) {
         (filter as any).isDeleted = onlyDeleted ? true : { $ne: true };
       }
-
-      // sizepage
 
       const current = Number(query?.current) > 0 ? Number(query.current) : 1;
       const pageSize =

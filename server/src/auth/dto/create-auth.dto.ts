@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class CreateAuthDto {
   @IsEmail({}, { message: 'Invalid email' })
@@ -9,4 +16,8 @@ export class CreateAuthDto {
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters' })
   password: string;
+
+  @IsEnum(['parent', 'tutor', 'admin'])
+  @IsOptional()
+  role?: 'parent' | 'tutor' | 'admin' = 'parent';
 }
