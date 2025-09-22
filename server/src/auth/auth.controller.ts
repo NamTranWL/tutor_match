@@ -3,17 +3,13 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   Request,
   UseGuards,
   Query,
-  Res,
   BadRequestException,
+  Redirect,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Response } from 'express';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public } from '../decorator/customize';
 import { CreateAuthDto } from './dto/create-auth.dto';
@@ -44,32 +40,22 @@ export class AuthController {
     return this.authService.handleRegister(registerDto);
   }
 
-  @Get('mail')
-  @Public()
-  testmail() {
-    this.mailerService.sendMail({
-      to: 'ngiuthaone@gmail.com', // list of receivers
-      subject: 'Testing Nest MailerModule ✔', // Subject line
-      text: 'welcome', // plaintext body
-      template: 'register',
-      context: {
-        name: 'welcome',
-        activationCode: '123123123',
-      },
-    });
-    return 'test mail';
-  }
-
   // http://localhost:8080/api/auth/activate?code=xxxx
-  @Public()
+
   @Get('activate')
-  async activate(@Query('code') code: string, @Res() res: Response) {
+  @Public()
+  @Redirect(undefined, 302)
+  async activate(@Query('code') code: string) {
     const { ok, reason } = await this.authService.activateByCode(code);
-    // Redirect về frontend kèm trạng thái
-    const target = new URL(process.env.ACTIVATION_REDIRECT_URL!); // ví dụ: https://your-frontend.com/activate-result
+    const frontend = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+    const path = process.env.ACTIVATION_REDIRECT_PATH || '/activate-result';
+
+    const target = new URL(path, frontend);
     target.searchParams.set('status', ok ? 'success' : 'failed');
     if (!ok && reason) target.searchParams.set('reason', reason);
-    return res.redirect(target.toString());
+
+    // Nest sẽ set Location và 302 dựa trên object return
+    return { url: target.toString() };
   }
 
   @Public()

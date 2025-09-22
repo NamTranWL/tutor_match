@@ -25,8 +25,12 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
   private buildActivationLink(code: string) {
-    const base = process.env.API_BASE_URL || 'http://localhost:8080/api/v1';
-    return `${base}/auth/activate?code=${encodeURIComponent(code)}`;
+    const base = (
+      process.env.API_BASE_URL || 'http://localhost:8080/api/v1'
+    ).replace(/\/?$/, '/');
+    const url = new URL('auth/activate', base);
+    url.searchParams.set('code', code);
+    return url.toString();
   }
 
   async validateUser(email: string, password: string): Promise<SafeUser> {
@@ -53,6 +57,16 @@ export class AuthService {
   }
 
   async login(user: SafeUser): Promise<LoginResult> {
+    // ensure user is active before issuing token
+    const dbUser = await this.userModel
+      .findById(user._id)
+      .select('isActive')
+      .lean();
+    if (dbUser && dbUser.isActive === false) {
+      // account exists but not activated
+      throw new BadRequestException('Tài khoản chưa kích hoạt');
+    }
+
     const payload = { sub: user._id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(payload);
     return { access_token, user };
@@ -64,7 +78,7 @@ export class AuthService {
   async activateByCode(
     code: string,
   ): Promise<{ ok: boolean; reason?: string }> {
-    const user = await this.userModel.findOne({ activationCode: code });
+    const user = await this.userModel.findOne({ codeID: code });
     if (!user) return { ok: false, reason: 'invalid_code' };
 
     if (!user.codeExpired || user.codeExpired < new Date()) {

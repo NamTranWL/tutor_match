@@ -22,6 +22,14 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private mailerService: MailerService,
   ) {}
+  private buildActivationLink(code: string) {
+    const base = (
+      process.env.API_BASE_URL || 'http://localhost:8080/api/v1'
+    ).replace(/\/?$/, '/');
+    const url = new URL('auth/activate', base);
+    url.searchParams.set('code', code);
+    return url.toString();
+  }
 
   async isEmailExists(email: string): Promise<boolean> {
     const user = await this.userModel.exists({ email });
@@ -69,14 +77,16 @@ export class UsersService {
       codeID,
       codeExpired: dayjs().add(1, 'day').toDate(),
     });
+    const link = this.buildActivationLink(newUser.codeID);
     this.mailerService.sendMail({
       to: newUser.email, // list of receivers
       subject:
         'Chào mừng đến với TutorMatch! Vui lòng kích hoạt tài khoản của bạn', // Subject line
       template: 'register',
       context: {
-        name: newUser.email,
+        name: newUser.email.split('@')[0],
         activationCode: newUser.codeID,
+        activationLink: link,
       },
     });
 

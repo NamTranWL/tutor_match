@@ -3,7 +3,6 @@
 import { auth, signIn } from "@/auth";
 import { revalidateTag } from "next/cache";
 import { sendRequest } from "./api";
-import { email } from "zod";
 
 export async function authenticate(email: string, password: string) {
   try {

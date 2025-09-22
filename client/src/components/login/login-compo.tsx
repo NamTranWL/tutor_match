@@ -13,12 +13,6 @@ const onFinish = async (values: any) => {
   const { email, password } = values;
   const res = await authenticate(email, password);
   console.log(">>> check res: ", res);
-  // await signIn("credentials", {
-  //   email,
-  //   password,
-  //   redirect: false,
-  //   callbackUrl: "/",
-  // });
 };
 
 const LoginComponent = () => {
