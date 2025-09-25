@@ -7,7 +7,6 @@ import {
   MinLength,
 } from 'class-validator';
 import { UserRole, UserStatus, Gender } from '../schemas/user.schema';
-import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
   @IsEmail()

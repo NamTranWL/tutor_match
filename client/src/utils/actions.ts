@@ -9,10 +9,8 @@ export async function authenticate(email: string, password: string) {
     const r = await signIn("credentials", {
       email: email,
       password: password,
-      // callbackUrl: "/",
       redirect: false,
     });
-    console.log(">>> check r: ", r);
     return r;
   } catch (error) {
     if ((error as any).name === "InvalidEmailPasswordError") {

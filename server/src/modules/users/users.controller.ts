@@ -24,19 +24,16 @@ export class UsersController {
   }
 
   @Get()
-  @Public()
   async findAll(@Query() query: Record<string, any>) {
     return this.usersService.findAll(query);
   }
 
   @Get(':id')
-  @Public()
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
   @Patch(':id')
-  @Public()
   update(@Param() { id }: MongoIdParamDto, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }

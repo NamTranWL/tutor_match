@@ -1,5 +1,6 @@
+// src/middleware.ts
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { auth } from "@/auth";
 
 const roleNeeded: Record<"/admin" | "/tutor" | "/parent", string[]> = {
   "/admin": ["admin"],
@@ -7,36 +8,39 @@ const roleNeeded: Record<"/admin" | "/tutor" | "/parent", string[]> = {
   "/parent": ["parent"],
 };
 
-export async function middleware(req: NextRequest) {
-  const path = req.nextUrl.pathname;
+export default auth((req) => {
+  const { nextUrl } = req;
+  const path = nextUrl.pathname;
 
-  // Chưa dùng session: giả lập role chưa xác định
-  const role: string | undefined = undefined;
-
+  // Chỉ xử lý các khu vực được bảo vệ
   const match = (
     Object.keys(roleNeeded) as Array<keyof typeof roleNeeded>
   ).find((prefix) => path.startsWith(prefix));
 
   if (!match) return NextResponse.next();
 
-  // Khi chưa có role → coi như chưa đăng nhập
-  if (!role) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("callbackUrl", path);
-    return NextResponse.redirect(url);
+  // Chưa đăng nhập → đính kèm callbackUrl đầy đủ (pathname + search)
+  if (!req.auth) {
+    const loginUrl = new URL("/login", nextUrl);
+    const cb = path + (nextUrl.search || "");
+    loginUrl.searchParams.set("callbackUrl", cb);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Khi có role thật sau này:
-  if (!roleNeeded[match].includes(role)) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/${role}`; // hoặc "/"
-    return NextResponse.redirect(url);
+  // Đã đăng nhập → kiểm tra role
+  const role = (req.auth.user as any)?.role as string | undefined;
+
+  // Sai role → đẩy về trang chủ theo role (nếu có) hoặc "/"
+  if (!role || !roleNeeded[match].includes(role)) {
+    const redirectUrl = new URL(role ? `/${role}` : "/", nextUrl);
+    return NextResponse.redirect(redirectUrl);
   }
 
+  // Đúng role → cho qua
   return NextResponse.next();
-}
+});
 
+// Áp dụng cho các vùng cần bảo vệ
 export const config = {
   matcher: ["/admin/:path*", "/tutor/:path*", "/parent/:path*"],
 };

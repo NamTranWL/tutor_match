@@ -1,28 +1,52 @@
 "use client";
+
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordLine } from "react-icons/ri";
-import { Button, Col, Divider, Form, Input, Row } from "antd";
-import { signIn } from "next-auth/react";
-import { authenticate } from "@/utils/actions";
+import { Form, Input } from "antd";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, getSession } from "next-auth/react";
 
-const onFinish = async (values: any) => {
-  console.log("Success:", values);
-  const { email, password } = values;
-  const res = await authenticate(email, password);
-  console.log(">>> check res: ", res);
+const roleHome = (role?: string) => {
+  switch (role) {
+    case "admin":
+      return "/admin";
+    case "tutor":
+      return "/tutor";
+    case "parent":
+      return "/parent";
+    default:
+      return "/";
+  }
 };
 
 const LoginComponent = () => {
+  const router = useRouter();
+  const search = useSearchParams();
+  const callbackUrl = search.get("callbackUrl") || "";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleEmailLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Email login", { email, password });
+  const onFinish = async (values: any) => {
+    const { email, password } = values;
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (res?.ok) {
+      const session = await getSession();
+      const role = (session?.user as any)?.role as string | undefined;
+      router.replace(callbackUrl || roleHome(role));
+      return;
+    }
+
+    // TODO: hiển thị lỗi (res?.error) nếu muốn
   };
 
   const handleGoogleLogin = () => {

@@ -23,9 +23,7 @@ export class UsersService {
     private mailerService: MailerService,
   ) {}
   private buildActivationLink(code: string) {
-    const base = (
-      process.env.API_BASE_URL || 'http://localhost:8080/api/v1'
-    ).replace(/\/?$/, '/');
+    const base = process.env.API_BASE_URL.replace(/\/?$/, '/');
     const url = new URL('auth/activate', base);
     url.searchParams.set('code', code);
     return url.toString();

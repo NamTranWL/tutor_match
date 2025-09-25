@@ -5,6 +5,7 @@ import {
   InactiveAccountError,
   InvalidEmailPasswordError,
 } from "./utils/errors";
+import { IUser } from "./types/next-auth";
 const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -23,12 +24,12 @@ const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        if (!res.statusCode) {
+        if (res.statusCode === 201) {
           return {
+            access_token: res.data?.access_token,
             _id: res.data?.user?._id,
-            role: res.data?.user?.role,
             email: res.data?.user?.email,
-            access_token: res.data?.user?.access_token,
+            role: res.data?.user?.role,
           };
         } else if (+res.statusCode === 401) {
           throw new InvalidEmailPasswordError("Sai email hoặc mật khẩu");
@@ -37,12 +38,29 @@ const { handlers, signIn, signOut, auth } = NextAuth({
         } else {
           throw new Error("Internal servel error");
         }
-        return user;
       },
     }),
   ],
   pages: {
     signIn: "/login",
+  },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`; // nội bộ
+      if (new URL(url).origin === baseUrl) return url; // cùng origin
+      return baseUrl + "/"; // mặc định
+    },
+    jwt({ token, user }) {
+      if (user) {
+        // User is available during sign-in
+        token.user = user as IUser;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      (session.user as IUser) = token.user;
+      return session;
+    },
   },
 });
 
