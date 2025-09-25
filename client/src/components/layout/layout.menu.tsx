@@ -1,3 +1,4 @@
+// layout.menu.tsx
 import {
   PieChartOutlined,
   DesktopOutlined,
@@ -12,21 +13,14 @@ import {
 import type { MenuProps } from "antd";
 
 export type Role = "admin" | "tutor" | "parent";
-
 type MenuItem = Required<MenuProps>["items"][number];
 
-// Helper để tạo item
 const getItem = (
   label: React.ReactNode,
   key: React.Key,
   icon?: React.ReactNode,
   children?: MenuItem[]
-): MenuItem => ({
-  key,
-  icon,
-  children,
-  label,
-});
+): MenuItem => ({ key, icon, children, label });
 
 // ================= ADMIN =================
 export const adminMenu: MenuItem[] = [
@@ -64,7 +58,8 @@ export const parentMenu: MenuItem[] = [
 ];
 
 // ================= EXPORT HELPER =================
-export const getMenuByRole = (role: Role): MenuItem[] => {
+// ✅ Cho phép role là optional, nếu chưa xác định trả về [] để tránh nhấp nháy UI
+export const getMenuByRole = (role?: Role): MenuItem[] => {
   switch (role) {
     case "admin":
       return adminMenu;
@@ -73,6 +68,6 @@ export const getMenuByRole = (role: Role): MenuItem[] => {
     case "parent":
       return parentMenu;
     default:
-      return [];
+      return []; // chưa có role -> render rỗng (không lỗi, không chớp)
   }
 };

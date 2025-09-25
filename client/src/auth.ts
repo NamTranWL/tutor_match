@@ -46,13 +46,12 @@ const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) return `${baseUrl}${url}`; // nội bộ
-      if (new URL(url).origin === baseUrl) return url; // cùng origin
-      return baseUrl + "/"; // mặc định
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl + "/";
     },
     jwt({ token, user }) {
       if (user) {
-        // User is available during sign-in
         token.user = user as IUser;
       }
       return token;

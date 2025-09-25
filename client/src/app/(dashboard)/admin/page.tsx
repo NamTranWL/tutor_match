@@ -1,44 +1,27 @@
-"use client";
-
-import React, { useState } from "react";
-import { Breadcrumb, Layout, Menu, theme } from "antd";
-import AdminFooter from "@/components/layout/admin.footer";
+// app/(dashboard)/admin/page.tsx  (SERVER COMPONENT)
+import { auth } from "@/auth";
 import AdminHeader from "@/components/layout/admin.header";
+import AdminFooter from "@/components/layout/admin.footer";
 import AdminSidebar from "@/components/layout/admin.sidebar";
+import { Role } from "@/components/layout/layout.menu";
 
-const { Header, Content, Footer, Sider } = Layout;
-
-const App: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+export default async function AdminPage() {
+  const session = await auth(); // ✅ chạy ở server
+  const role = session?.user?.role as Role | undefined;
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <AdminSidebar />
-      <Layout>
-        <AdminHeader />
-        <Content style={{ margin: "0 16px" }}>
-          <Breadcrumb
-            style={{ margin: "16px 0" }}
-            items={[{ title: "User" }, { title: "Bill" }]}
-          />
-          <div
-            style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            Bill is a cat.
-          </div>
-        </Content>
-        <AdminFooter />
-      </Layout>
-    </Layout>
-  );
-};
+    <div className="min-h-screen flex">
+      {/* Sidebar là client, nhận role từ server */}
+      <AdminSidebar role={role} />
 
-export default App;
+      <div className="flex-1 flex flex-col">
+        <AdminHeader />
+        <main className="p-4">
+          {/* nội dung dashboard */}
+          Admin dashboard
+        </main>
+        <AdminFooter />
+      </div>
+    </div>
+  );
+}

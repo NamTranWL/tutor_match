@@ -1,46 +1,48 @@
 // src/middleware.ts
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const roleNeeded: Record<"/admin" | "/tutor" | "/parent", string[]> = {
-  "/admin": ["admin"],
-  "/tutor": ["tutor"],
-  "/parent": ["parent"],
-};
+// /admin, /tutor, /parent
+const PROTECTED = ["/admin", "/tutor", "/parent"] as const;
+const roleHome = (role?: string) =>
+  role === "admin"
+    ? "/admin"
+    : role === "tutor"
+    ? "/tutor"
+    : role === "parent"
+    ? "/parent"
+    : "/";
 
-export default auth((req) => {
-  const { nextUrl } = req;
-  const path = nextUrl.pathname;
-
-  // Chỉ xử lý các khu vực được bảo vệ
-  const match = (
-    Object.keys(roleNeeded) as Array<keyof typeof roleNeeded>
-  ).find((prefix) => path.startsWith(prefix));
-
-  if (!match) return NextResponse.next();
-
-  // Chưa đăng nhập → đính kèm callbackUrl đầy đủ (pathname + search)
-  if (!req.auth) {
-    const loginUrl = new URL("/login", nextUrl);
-    const cb = path + (nextUrl.search || "");
-    loginUrl.searchParams.set("callbackUrl", cb);
-    return NextResponse.redirect(loginUrl);
+export async function middleware(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  if (token && (pathname === "/login" || pathname === "/register")) {
+    const url = req.nextUrl.clone();
+    url.pathname = roleHome((token.user as any)?.role);
+    return NextResponse.redirect(url);
   }
 
-  // Đã đăng nhập → kiểm tra role
-  const role = (req.auth.user as any)?.role as string | undefined;
-
-  // Sai role → đẩy về trang chủ theo role (nếu có) hoặc "/"
-  if (!role || !roleNeeded[match].includes(role)) {
-    const redirectUrl = new URL(role ? `/${role}` : "/", nextUrl);
-    return NextResponse.redirect(redirectUrl);
+  if (PROTECTED.some((p) => pathname.startsWith(p))) {
+    if (!token) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("callbackUrl", pathname + search);
+      return NextResponse.redirect(url);
+    }
+    const need = pathname.split("/")[1];
+    const role = (token.user as any)?.role;
+    if (role !== need) {
+      const url = req.nextUrl.clone();
+      url.pathname = roleHome(role);
+      return NextResponse.redirect(url);
+    }
   }
 
-  // Đúng role → cho qua
   return NextResponse.next();
-});
+}
 
-// Áp dụng cho các vùng cần bảo vệ
 export const config = {
-  matcher: ["/admin/:path*", "/tutor/:path*", "/parent/:path*"],
+  // tránh _next, file tĩnh, api...
+  matcher: ["/((?!_next|api|static|.*\\..*).*)"],
 };

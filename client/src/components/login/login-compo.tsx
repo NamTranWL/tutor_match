@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordLine } from "react-icons/ri";
-import { Form, Input } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { Form, Input, Button, notification } from "antd";
+import { authenticate } from "@/utils/actions";
 
 const roleHome = (role?: string) => {
   switch (role) {
@@ -22,43 +23,92 @@ const roleHome = (role?: string) => {
   }
 };
 
-const LoginComponent = () => {
+const sanitizeCallback = (cb?: string | null) => {
+  if (!cb) return null;
+  try {
+    if (cb.startsWith("/login") || cb.startsWith("/register")) return null;
+    if (typeof window !== "undefined" && cb.startsWith("http")) {
+      const u = new URL(cb);
+      if (u.origin !== window.location.origin) return null;
+      if (u.pathname === "/login" || u.pathname === "/register") return null;
+      return u.pathname + u.search + u.hash;
+    }
+    return cb;
+  } catch {
+    return null;
+  }
+};
+
+export default function LoginPage() {
   const router = useRouter();
   const search = useSearchParams();
-  const callbackUrl = search.get("callbackUrl") || "";
+  const [form] = Form.useForm();
+  const [api, contextHolder] = notification.useNotification();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const rawCallbackUrl = search.get("callbackUrl");
+  const callbackUrl = useMemo(
+    () => sanitizeCallback(rawCallbackUrl) ?? null,
+    [rawCallbackUrl]
+  );
+
+  const { status } = useSession();
+
+  // ✅ Khi session đã sẵn sàng → để server quyết định role ở /after-login
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callbackUrl ?? "/after-login");
+    }
+  }, [status, callbackUrl, router]);
 
   const onFinish = async (values: any) => {
     const { email, password } = values;
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const res = await authenticate(email, password);
 
-    if (res?.ok) {
-      const session = await getSession();
-      const role = (session?.user as any)?.role as string | undefined;
-      router.replace(callbackUrl || roleHome(role));
+    if (res.code === 1) {
+      form.setFields([
+        { name: "password", errors: ["Sai email hoặc mật khẩu"] },
+      ]);
+    } else if (res.code === 2) {
+      form.setFields([
+        { name: "email", errors: ["Tài khoản chưa được kích hoạt"] },
+      ]);
+    } else {
+      // ✅ Thành công → giao cho server redirect theo role
+      router.replace(callbackUrl ?? "/after-login");
       return;
     }
 
-    // TODO: hiển thị lỗi (res?.error) nếu muốn
+    api.error({
+      message: "Đăng nhập không thành công",
+      description: `${res.error}`,
+      placement: "topRight",
+      duration: 3,
+    });
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+  const onFinishFailed = () => {
+    api.warning({
+      message: "Thiếu thông tin",
+      description: "Vui lòng điền đầy đủ email và mật khẩu.",
+      placement: "topRight",
+      duration: 2.5,
+    });
   };
 
-  const handleFacebookLogin = () => {
-    console.log("Facebook login clicked");
+  const handleGoogleLogin = async () => {
+    await signIn("google", { callbackUrl: callbackUrl ?? "/", redirect: true });
+  };
+
+  const handleFacebookLogin = async () => {
+    await signIn("facebook", {
+      callbackUrl: callbackUrl ?? "/",
+      redirect: true,
+    });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
+      {contextHolder}
       <div className="bg-card p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold text-center text-foreground mb-6">
           Welcome Back
@@ -88,10 +138,12 @@ const LoginComponent = () => {
           </div>
 
           <Form
-            name="basic"
-            onFinish={onFinish}
-            autoComplete="off"
+            form={form}
+            name="login"
             layout="vertical"
+            autoComplete="off"
+            onFinish={onFinish}
+            onFinishFailed={onFinishFailed}
           >
             <div className="relative">
               <MdEmail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -99,12 +151,11 @@ const LoginComponent = () => {
                 name="email"
                 rules={[
                   { required: true, message: "Please input your email!" },
+                  { type: "email", message: "Email không hợp lệ" },
                 ]}
               >
                 <Input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email address"
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground"
                   required
@@ -120,21 +171,11 @@ const LoginComponent = () => {
                   { required: true, message: "Please input your password!" },
                 ]}
               >
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                <Input.Password
                   placeholder="Password"
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-card text-foreground placeholder:text-muted-foreground"
                 />
               </Form.Item>
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
             </div>
 
             <div className="flex items-center justify-between text-sm">
@@ -150,17 +191,29 @@ const LoginComponent = () => {
               </button>
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-accent transition duration-300"
+            <Button
+              htmlType="submit"
+              type="primary"
+              className="w-full py-2.5 mt-2 rounded-lg"
             >
               Sign in
-            </button>
+            </Button>
           </Form>
 
           <p className="text-center text-foreground">
-            Don't have an account?
-            <button className="ml-1 text-primary hover:text-accent">
+            Don&apos;t have an account?
+            <button
+              className="ml-1 text-primary hover:text-accent"
+              onClick={() =>
+                router.push(
+                  `/register${
+                    callbackUrl
+                      ? `?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                      : ""
+                  }`
+                )
+              }
+            >
               Create account
             </button>
           </p>
@@ -168,6 +221,4 @@ const LoginComponent = () => {
       </div>
     </div>
   );
-};
-
-export default LoginComponent;
+}

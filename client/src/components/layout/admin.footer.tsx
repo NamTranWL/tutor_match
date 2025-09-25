@@ -1,18 +1,8 @@
-"use client";
-
-import { Layout } from "antd";
-
-const AdminFooter = () => {
-  const { Footer } = Layout;
+// src/components/layout/admin.footer.tsx
+export default function AdminFooter() {
   return (
-    <Footer
-      style={{ textAlign: "center" }}
-      className="footer p-4 bg-base-200 text-base-content footer-center"
-    >
-      <div>
-        <p>© 2023 MatchTutor. All rights reserved.</p>
-      </div>
-    </Footer>
+    <footer style={{ textAlign: "center", padding: 16 }}>
+      © {new Date().getFullYear()} TutorMatch. All rights reserved.
+    </footer>
   );
-};
-export default AdminFooter;
+}

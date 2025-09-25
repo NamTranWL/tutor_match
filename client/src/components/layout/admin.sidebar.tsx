@@ -2,47 +2,18 @@
 
 import { Layout, Menu, theme } from "antd";
 import { useState } from "react";
-import {
-  DesktopOutlined,
-  FileOutlined,
-  PieChartOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-
 import type { MenuProps } from "antd";
-import { getMenuByRole } from "./layout.menu";
+import { getMenuByRole, Role } from "@/components/layout/layout.menu";
 
 type MenuItem = Required<MenuProps>["items"][number];
-
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[]
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-  } as MenuItem;
-}
-const role: "admin" | "tutor" | "parent" = "tutor"; // Thay đổi vai trò ở đây: 'admin', 'tutor', 'parent'
-
 const { Sider } = Layout;
-const AdminSidebar: React.FC = () => {
+
+export default function AdminSidebar({ role }: { role?: Role }) {
   const [collapsed, setCollapsed] = useState(false);
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  theme.useToken(); // nếu không dùng token có thể bỏ
 
   return (
-    <Sider
-      collapsible
-      collapsed={collapsed}
-      onCollapse={(value) => setCollapsed(value)}
-    >
+    <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
       <div className="demo-logo-vertical" />
       <Menu
         theme="dark"
@@ -52,5 +23,4 @@ const AdminSidebar: React.FC = () => {
       />
     </Sider>
   );
-};
-export default AdminSidebar;
+}

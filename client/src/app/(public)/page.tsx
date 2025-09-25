@@ -1,29 +1,51 @@
-// app/(public)/page.tsx
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import Link from "next/link";
 
-type SearchParams = { action?: string; callbackUrl?: string };
+export default async function PublicHome() {
+  return (
+    <main className="min-h-dvh flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
+      <section className="max-w-3xl mx-auto p-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight">TutorMatch</h1>
+        <p className="mt-4 text-slate-600">
+          Nền tảng kết nối Phụ huynh và Gia sư. Khám phá – Đặt lịch – Theo dõi
+          chất lượng học tập một cách minh bạch và tiện lợi.
+        </p>
 
-export default async function PublicHome({
-  searchParams,
-}: {
-  searchParams?: SearchParams;
-}) {
-  const session = await auth();
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <Link
+            href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/login`}
+            className="px-5 py-3 rounded-2xl shadow-sm border border-slate-200 hover:bg-slate-100 transition"
+          >
+            Login
+          </Link>
+          <Link
+            href={`${process.env.NEXT_PUBLIC_FRONTEND_URL}/register`}
+            className="px-5 py-3 rounded-2xl shadow-sm bg-black text-white hover:opacity-90 transition"
+          >
+            Register
+          </Link>
+        </div>
 
-  // Nếu đã đăng nhập → điều hướng theo role
-  const role = (session?.user as any)?.role as
-    | "admin"
-    | "tutor"
-    | "parent"
-    | undefined;
-
-  if (role === "admin") redirect("/admin");
-  if (role === "tutor") redirect("/tutor");
-  if (role === "parent") redirect("/parent");
-
-  // Chưa đăng nhập → đẩy sang login (mặc định) hoặc register nếu ?action=register
-  const cb = searchParams?.callbackUrl ?? "/";
-  const dest = searchParams?.action === "register" ? "/register" : "/login";
-  redirect(`${dest}?callbackUrl=${encodeURIComponent(cb)}`);
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+          <div className="p-4 rounded-2xl border border-slate-200">
+            <h3 className="font-semibold">Tìm Gia sư nhanh</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              Lọc theo môn, ngân sách, lịch trống và hình thức học.
+            </p>
+          </div>
+          <div className="p-4 rounded-2xl border border-slate-200">
+            <h3 className="font-semibold">Lịch học trực quan</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              Đồng bộ lịch – đặt buổi học chỉ với vài thao tác.
+            </p>
+          </div>
+          <div className="p-4 rounded-2xl border border-slate-200">
+            <h3 className="font-semibold">Theo dõi kết quả</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              Báo cáo tiến bộ định kỳ cho phụ huynh và học viên.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
