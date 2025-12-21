@@ -14,6 +14,13 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { minutes } from '@nestjs/throttler';
 import { RolesGuard } from './modules/common/guards/roles.guard';
 import { TransformInterceptor } from './core/transform.interceptor';
+import { TutorProfileModule } from '@/modules/tutor/tutor-profile.module';
+import { BookingsModule } from '@/modules/bookings/bookings.module';
+import { PaymentsModule } from '@/modules/payments/payments.module';
+import { ReviewsModule } from '@/modules/reviews/reviews.module';
+import { ParentProfileModule } from '@/modules/parent-profile/parent-profile.module';
+import { StudentProfileModule } from '@/modules/student-profile/student-profile.module';
+import { RequestBookingModule } from '@/modules/request-booking/request-booking.module';
 
 @Module({
   imports: [
@@ -23,8 +30,6 @@ import { TransformInterceptor } from './core/transform.interceptor';
         transport: {
           host: process.env.HOST_MAIL,
           port: 465,
-          // ignoreTLS: true,
-          // secure: false,
           auth: {
             user: process.env.MAIL_USER,
             pass: process.env.MAIL_PASSWORD,
@@ -62,6 +67,13 @@ import { TransformInterceptor } from './core/transform.interceptor';
     ThrottlerModule.forRoot([{ name: 'default', ttl: minutes(1), limit: 10 }]),
     AuthModule,
     UsersModule,
+    TutorProfileModule,
+    ParentProfileModule,
+    StudentProfileModule,
+    BookingsModule,
+    PaymentsModule,
+    ReviewsModule,
+    RequestBookingModule,
   ],
   controllers: [AppController],
   providers: [

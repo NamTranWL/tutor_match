@@ -13,18 +13,20 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { MongoIdParamDto } from './dto/mongo-id-param.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from '@/decorator/customize';
+import { ListUsersQueryDto } from './dto/list-users.query.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  async findAll(@Query() query: Record<string, any>) {
+  async findAll(@Query() query: ListUsersQueryDto) {
     return this.usersService.findAll(query);
   }
 

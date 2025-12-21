@@ -13,6 +13,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
   async validate(payload: any) {
-    return { _id: payload.sub, email: payload.email, role: payload.role };
+    if (!payload?.sub) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+    return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }

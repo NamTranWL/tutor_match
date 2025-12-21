@@ -1,6 +1,12 @@
 "use client";
-import LoginComponent from "@/components/login/login-compo";
+export const dynamic = "force-dynamic";
+import React, { Suspense } from "react";
+import LoginComponent from "@/shared/components/login/LoginCompo";
 
 export default function LoginPage() {
-  return <LoginComponent />;
+  return (
+    <Suspense fallback={<div />}> 
+      <LoginComponent />
+    </Suspense>
+  );
 }

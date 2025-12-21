@@ -7,8 +7,11 @@ import {
   UseGuards,
   Query,
   BadRequestException,
-  Redirect,
+  Res,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { Public, ResponseMessage } from '../decorator/customize';
@@ -17,11 +20,12 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { User, UserDocument } from '@/modules/users/schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Throttle, ThrottlerGuard, minutes, hours } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard, minutes } from '@nestjs/throttler';
 import { UseGuards as Guards } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   constructor(
     private readonly authService: AuthService,
     private readonly mailerService: MailerService,
@@ -45,18 +49,35 @@ export class AuthController {
 
   @Get('activate')
   @Public()
-  @Redirect(undefined, 302)
-  async activate(@Query('code') code: string) {
+  async activate(@Query('code') code: string, @Res() res: Response) {
+    this.logger.log(`Activate request received, code=${code}`);
+
     const { ok, reason } = await this.authService.activateByCode(code);
-    const frontend = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
-    const path = process.env.ACTIVATION_REDIRECT_PATH || '/activate-result';
+    this.logger.log(
+      `Activation result for code=${code}: ok=${ok}, reason=${reason}`,
+    );
+
+    const frontend = process.env.FRONTEND_ORIGIN;
+    const path = process.env.ACTIVATION_REDIRECT_PATH;
+    if (!frontend) {
+      this.logger.error('Missing FRONTEND_ORIGIN environment variable');
+      throw new InternalServerErrorException('FRONTEND_ORIGIN not configured');
+    }
+    if (!path) {
+      this.logger.error(
+        'Missing ACTIVATION_REDIRECT_PATH environment variable',
+      );
+      throw new InternalServerErrorException(
+        'ACTIVATION_REDIRECT_PATH not configured',
+      );
+    }
 
     const target = new URL(path, frontend);
     target.searchParams.set('status', ok ? 'success' : 'failed');
     if (!ok && reason) target.searchParams.set('reason', reason);
 
-    // Nest sẽ set Location và 302 dựa trên object return
-    return { url: target.toString() };
+    this.logger.log(`Redirecting to ${target.toString()}`);
+    return res.redirect(302, target.toString());
   }
 
   @Public()

@@ -17,7 +17,11 @@ export class CreateAuthDto {
   @MinLength(8, { message: 'Password must be at least 8 characters' })
   password: string;
 
+  @IsString({ message: 'Name must be a string' })
+  @IsOptional()
+  name?: string;
+
   @IsEnum(['parent', 'tutor', 'admin'])
   @IsOptional()
-  role?: 'parent' | 'tutor' | 'admin' = 'parent';
+  role?: 'parent' | 'tutor' | 'admin';
 }

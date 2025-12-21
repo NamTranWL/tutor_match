@@ -19,7 +19,7 @@ export class CreateUserDto {
 
   @IsEnum(['parent', 'tutor', 'admin'])
   @IsOptional()
-  role?: UserRole = 'parent';
+  role?: UserRole;
 
   @IsString()
   @IsOptional()

@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { hashPasswordHelper, comparePasswords } from '@/helpers/util';
+import { hashPasswordHelper } from '@/helpers/util';
 import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -22,6 +22,9 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private mailerService: MailerService,
   ) {}
+  private escapeRegex(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
   private buildActivationLink(code: string) {
     const base = process.env.API_BASE_URL.replace(/\/?$/, '/');
     const url = new URL('auth/activate', base);
@@ -71,6 +74,7 @@ export class UsersService {
     const newUser = await this.userModel.create({
       email: registerDto.email,
       role: registerDto.role,
+      name: registerDto.name,
       password: hashedPassword,
       codeID,
       codeExpired: dayjs().add(1, 'day').toDate(),
@@ -78,8 +82,7 @@ export class UsersService {
     const link = this.buildActivationLink(newUser.codeID);
     this.mailerService.sendMail({
       to: newUser.email, // list of receivers
-      subject:
-        'Chào mừng đến với TutorMatch! Vui lòng kích hoạt tài khoản của bạn', // Subject line
+      subject: 'Welcome to TutorFinder! Please activate your account', // Subject line
       template: 'register',
       context: {
         name: newUser.email.split('@')[0],
@@ -95,52 +98,34 @@ export class UsersService {
 
   async findAll(query: any) {
     try {
-      const { default: aqp } = await Function(
-        'return import("api-query-params")',
-      )();
+      const filter: Record<string, any> = {};
+      // Exclude deleted by default
+      filter.isDeleted = { $ne: true };
 
-      let { filter = {}, sort } = aqp(query || {});
-
-      delete (filter as any).current;
-      delete (filter as any).pageSize;
-      delete (filter as any).password;
-      delete (filter as any).withDeleted;
-      delete (filter as any).onlyDeleted;
-
-      // filter for deleted
-      if ('isdeleted' in filter && !('isDeleted' in filter)) {
-        (filter as any).isDeleted = (filter as any).isdeleted;
-        delete (filter as any).isdeleted;
-      }
-      if (typeof (filter as any).isDeleted === 'string') {
-        const v = String((filter as any).isDeleted).toLowerCase();
-        (filter as any).isDeleted = ['true', '1', 'yes', 'on'].includes(v);
-      }
-      const includeDeleted = ['true', '1', 'yes'].includes(
-        String(query?.withDeleted || '').toLowerCase(),
-      );
-      const onlyDeleted = ['true', '1', 'yes'].includes(
-        String(query?.onlyDeleted || '').toLowerCase(),
-      );
-
-      if (!includeDeleted) {
-        (filter as any).isDeleted = onlyDeleted ? true : { $ne: true };
+      if (query?.role) filter.role = String(query.role);
+      if (query?.status) filter.status = String(query.status);
+      if (query?.email) {
+        const pattern = this.escapeRegex(String(query.email));
+        filter.email = { $regex: pattern, $options: 'i' };
       }
 
-      const current = Number(query?.current) > 0 ? Number(query.current) : 1;
-      const pageSize =
-        Number(query?.pageSize) > 0 ? Number(query.pageSize) : 10;
+      const currentRaw = Number(query?.current);
+      const sizeRaw = Number(query?.pageSize);
+      const current =
+        Number.isFinite(currentRaw) && currentRaw >= 1 ? currentRaw : 1;
+      const unclamped = Number.isFinite(sizeRaw) && sizeRaw >= 1 ? sizeRaw : 10;
+      const pageSize = Math.min(100, unclamped);
       const skip = (current - 1) * pageSize;
 
       const results = await this.userModel
         .find(filter)
         .limit(pageSize)
         .skip(skip)
-        .sort(sort as any)
+        .sort({ createdAt: -1 })
         .select('-password  ')
         .lean();
       const totalItems = await this.userModel.countDocuments(filter);
-      const totalPages = Math.ceil(totalItems / pageSize);
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
       return {
         results,

@@ -1,26 +1,27 @@
-// app/(dashboard)/admin/page.tsx  (SERVER COMPONENT)
 import { auth } from "@/auth";
-import AdminHeader from "@/components/layout/admin.header";
-import AdminFooter from "@/components/layout/admin.footer";
-import AdminSidebar from "@/components/layout/admin.sidebar";
-import { Role } from "@/components/layout/layout.menu";
+import type { Role } from "@/shared/components/layout/layout.menu";
+import Link from "next/link";
 
 export default async function AdminPage() {
-  const session = await auth(); // ✅ chạy ở server
+  const session = await auth();
   const role = session?.user?.role as Role | undefined;
-
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar là client, nhận role từ server */}
-      <AdminSidebar role={role} />
-
-      <div className="flex-1 flex flex-col">
-        <AdminHeader />
-        <main className="p-4">
-          {/* nội dung dashboard */}
-          Admin dashboard
-        </main>
-        <AdminFooter />
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold">Admin</h1>
+      <p className="text-muted-foreground">Welcome to the admin area.</p>
+      <div className="flex gap-3">
+        <Link href="/admin/dashboard" className="px-3 py-2 rounded bg-primary text-white">
+          Overview
+        </Link>
+        <Link href="/admin/users" className="px-3 py-2 rounded border">
+          Users
+        </Link>
+        <Link href="/admin/bookings" className="px-3 py-2 rounded border">
+          Bookings
+        </Link>
+        <Link href="/admin/payments" className="px-3 py-2 rounded border">
+          Payments
+        </Link>
       </div>
     </div>
   );

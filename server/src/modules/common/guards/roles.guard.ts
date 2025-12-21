@@ -14,21 +14,16 @@ export class RolesGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const handler = ctx.getHandler();
     const cls = ctx.getClass();
-
-    // Cho phép route @Public() bỏ qua check role
     const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       handler,
       cls,
     ]);
     if (isPublic) return true;
-
-    // Lấy roles yêu cầu từ metadata
     const requiredRoles = this.reflector.getAllAndOverride<AppRole[]>(
       ROLES_KEY,
       [handler, cls],
     );
     if (!requiredRoles || requiredRoles.length === 0) {
-      // Route không set @Roles() → không cần check role
       return true;
     }
 
@@ -41,7 +36,7 @@ export class RolesGuard implements CanActivate {
 
     if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
-        `Forbidden: role "${user.role}" not allowed`,
+        `Forbidden: role "${user.role}" not allowed. Ban khong co quyen su dung chuc nang nay`,
       );
     }
 

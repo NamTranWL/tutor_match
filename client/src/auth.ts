@@ -1,11 +1,12 @@
 import NextAuth from "next-auth";
+import type { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
-import { sendRequest } from "./utils/api";
+import { sendRequest } from "./shared/utils/api";
 import {
   InactiveAccountError,
   InvalidEmailPasswordError,
-} from "./utils/errors";
-import { IUser } from "./types/next-auth";
+} from "./shared/utils/errors";
+import { IUser } from "./shared/types/next-auth";
 const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -30,6 +31,8 @@ const { handlers, signIn, signOut, auth } = NextAuth({
             _id: res.data?.user?._id,
             email: res.data?.user?.email,
             role: res.data?.user?.role,
+            name: res.data?.user?.name,
+            avatar: res.data?.user?.avatar,
           };
         } else if (+res.statusCode === 401) {
           throw new InvalidEmailPasswordError("Sai email hoặc mật khẩu");
@@ -57,7 +60,19 @@ const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     session({ session, token }) {
-      (session.user as IUser) = token.user;
+      const maybeUser: unknown = (token as unknown as { user?: unknown })?.user;
+      if (
+        maybeUser &&
+        typeof maybeUser === "object" &&
+        (maybeUser as Record<string, unknown>)._id &&
+        (maybeUser as Record<string, unknown>).email &&
+        (maybeUser as Record<string, unknown>).role
+      ) {
+        const u = maybeUser as IUser;
+        const base = session.user as AdapterUser;
+        const merged: AdapterUser & IUser = { ...base, ...u };
+        session.user = merged;
+      }
       return session;
     },
   },
