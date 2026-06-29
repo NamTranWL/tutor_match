@@ -27,7 +27,7 @@ export default function TutorFinderLanding() {
           </nav>
           <div className="flex items-center gap-3">
             <a
-              className="rounded-xl bg-primary border font-medium border-secondary/15 px-4 py-2 text-sm text-white hover:bg-white/90 hover:text-primary md:inline-block"
+              className="rounded-xl bg-brand-green-emerald border font-medium border-secondary/15 px-4 py-2 text-sm text-white hover:bg-white/90 hover:text-primary md:inline-block"
               href="login"
             >
               Login

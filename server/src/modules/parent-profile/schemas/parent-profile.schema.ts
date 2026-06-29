@@ -6,8 +6,8 @@ export type ParentProfileDocument = HydratedDocument<ParentProfile>;
 
 @Schema({ timestamps: true, versionKey: false })
 export class ParentProfile extends BaseSchema {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
-  userId: Types.ObjectId;
+  @Prop({ type: String, ref: 'User', required: true, unique: true })
+  userId: string;
 
   @Prop() fullName?: string;
   @Prop() phone?: string;

@@ -4,6 +4,7 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
+import { PaymentsAdminController } from './payments.admin.controller';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { PaymentsController } from './payments.controller';
       { name: Booking.name, schema: BookingSchema },
     ]),
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, PaymentsAdminController],
   providers: [PaymentsService],
   exports: [PaymentsService],
 })

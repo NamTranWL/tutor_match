@@ -8,10 +8,12 @@ import {
   IsArray,
   Min,
   ValidateNested,
-  IsDate,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { CreateTutorProfileDto } from './create-tutor-profile.dto';
+import { Type } from 'class-transformer';
+import {
+  CreateTutorProfileDto,
+  WeeklyAvailabilitySlotDto,
+} from './create-tutor-profile.dto';
 
 export class UpdateTutorProfileDto extends OmitType(
   PartialType(CreateTutorProfileDto),
@@ -53,13 +55,14 @@ export class UpdateTutorProfileDto extends OmitType(
   isVerified?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => (value ? new Date(value) : value))
-  @IsDate()
-  nextAvailableAt?: Date;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WeeklyAvailabilitySlotDto)
+  weeklyAvailability?: WeeklyAvailabilitySlotDto[];
 
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => Object) // hoặc thay bằng DTO con nếu bạn muốn strict hơn
+  @Type(() => Object)
   experience?: any[];
 
   @IsOptional()

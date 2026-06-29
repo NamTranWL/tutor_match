@@ -30,6 +30,11 @@ export class BookingsController {
     return this.service.findAll(query);
   }
 
+  @Get('stats')
+  getStats(@Query() query: any) {
+    return this.service.getStats(query);
+  }
+
   @Get(':id')
   findOne(@Param() { id }: MongoIdParamDto) {
     return this.service.findOne(id);

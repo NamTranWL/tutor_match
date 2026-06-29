@@ -1,11 +1,14 @@
 export interface BookingDoc {
   _id: string;
-  parentProfileId: string;
-  tutorProfileId: string;
-  studentId: string;
+  parentProfileId: string | { _id: string };
+  tutorProfileId: string | { _id: string };
+  studentId: string | { _id?: string };
   date: string;
   amount: number;
   status: string;
+  parent?: { userId: string; email?: string; name?: string };
+  tutor?: { userId: string; email?: string; name?: string };
+  student?: { name?: string };
 }
 
 export interface CreateBookingBody {

@@ -1,7 +1,9 @@
 "use client";
 
+import "@ant-design/v5-patch-for-react-19";
+
 import { SessionProvider } from "next-auth/react";
-import { ConfigProvider, theme } from "antd";
+import { ConfigProvider, theme, App } from "antd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -18,8 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             token: {},
           }}
         >
-          <AccessTokenSync />
-          {children}
+          <App>
+            <AccessTokenSync />
+            {children}
+          </App>
         </ConfigProvider>
       </QueryClientProvider>
     </SessionProvider>

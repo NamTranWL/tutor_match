@@ -11,7 +11,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { MongoIdParamDto } from '@/modules/users/dto/mongo-id-param.dto';
 
@@ -19,11 +18,6 @@ import { MongoIdParamDto } from '@/modules/users/dto/mongo-id-param.dto';
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
-
-  @Post()
-  create(@Body() dto: CreatePaymentDto) {
-    return this.service.create(dto);
-  }
 
   @Get()
   findAll(@Query() query: any) {

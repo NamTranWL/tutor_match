@@ -31,7 +31,7 @@ export async function middleware(req: NextRequest) {
     if (!token) {
       const url = req.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("callbackUrl", pathname + search);
+      url.search = "";
       return NextResponse.redirect(url);
     }
 

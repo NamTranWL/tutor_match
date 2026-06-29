@@ -28,6 +28,8 @@ import {
   StudentProfileDocument,
 } from '@/modules/student-profile/schemas/student-profile.schema';
 import { BookingsService } from '@/modules/bookings/bookings.service';
+import { PaymentsService } from '@/modules/payments/payments.service';
+import { TutorScheduleService } from '@/modules/tutor-schedule/tutor-schedule.service';
 import { BookingStatus } from '../common/constants/booking-status';
 
 @Injectable()
@@ -44,6 +46,8 @@ export class RequestBookingService {
     @InjectModel(StudentProfile.name)
     private studentProfileModel: Model<StudentProfileDocument>,
     private bookingsService: BookingsService,
+    private paymentsService: PaymentsService,
+    private tutorScheduleService: TutorScheduleService,
   ) {}
 
   private async getParentContext(parentUserId: string) {
@@ -78,29 +82,42 @@ export class RequestBookingService {
     return student;
   }
 
-  private async validateTutors(tutorIds: string[]) {
-    const tutors = await this.userModel
-      .find({ _id: { $in: tutorIds }, role: 'tutor' })
+  private async validateTutors(tutorProfileIds: string[]) {
+    // Find tutor profiles by their _id
+    const profiles = await this.tutorProfileModel
+      .find({ _id: { $in: tutorProfileIds } })
       .lean();
-    if (tutors.length !== tutorIds.length) {
+
+    if (profiles.length !== tutorProfileIds.length) {
+      throw new BadRequestException('One or more tutor profiles not found');
+    }
+
+    // Get the associated user IDs from the tutor profiles
+    const userIds = profiles.map((p) => p.userId);
+
+    // Validate that the users exist and are tutors
+    const tutors = await this.userModel
+      .find({ _id: { $in: userIds }, role: 'tutor' })
+      .lean();
+
+    if (tutors.length !== profiles.length) {
       throw new BadRequestException(
         'One or more tutor users not found or not tutors',
       );
     }
+
     const inactive = tutors.find((t) => !t.isActive);
     if (inactive) throw new ForbiddenException('Tutor account is not active');
 
-    const profiles = await this.tutorProfileModel
-      .find({ userId: { $in: tutors.map((t) => t._id) } })
-      .lean();
-    const map = new Map<string, any>();
-    for (const p of profiles) map.set(String(p.userId), p);
-    const results = tutors.map((t) => ({
-      user: t,
-      profile: map.get(String(t._id)),
+    // Map profiles to their users
+    const userMap = new Map<string, any>();
+    for (const t of tutors) userMap.set(String(t._id), t);
+
+    const results = profiles.map((p) => ({
+      user: userMap.get(String(p.userId)),
+      profile: p,
     }));
-    if (results.some((r) => !r.profile))
-      throw new BadRequestException('Tutor profile not found for some users');
+
     return results;
   }
 
@@ -116,6 +133,18 @@ export class RequestBookingService {
     if (Number.isNaN(requestedDate.getTime()))
       throw new BadRequestException('Invalid requestedDate');
 
+    // Validate slotId when provided — only valid for single-tutor requests
+    if (dto.slotId) {
+      if (tutors.length > 1)
+        throw new BadRequestException(
+          'slotId can only be provided when requesting a single tutor',
+        );
+      await this.tutorScheduleService.validateSlotAvailable(
+        dto.slotId,
+        tutors[0].profile._id,
+      );
+    }
+
     // Prevent duplicates per unique index. We'll also check pre-insert for cleaner error.
     const existing = await this.requestModel.countDocuments({
       parentProfileId: parentProfile._id,
@@ -130,6 +159,10 @@ export class RequestBookingService {
         'Duplicate pending request exists for one or more tutors',
       );
 
+    const slotObjectId = dto.slotId
+      ? new Types.ObjectId(dto.slotId)
+      : undefined;
+
     const docs = tutors.map((t) => ({
       parentProfileId: parentProfile._id,
       studentId: student._id,
@@ -137,6 +170,7 @@ export class RequestBookingService {
       requestedDate,
       note: dto.note,
       status: 'pending' as const,
+      ...(slotObjectId ? { slotId: slotObjectId } : {}),
     }));
 
     const created = await this.requestModel.insertMany(docs);
@@ -174,7 +208,7 @@ export class RequestBookingService {
       throw new UnauthorizedException('Invalid token payload');
     }
     const tutorProfile = await this.tutorProfileModel
-      .findOne({ userId: tutorUserId })
+      .findOne({ userId: new Types.ObjectId(tutorUserId) })
       .lean();
     if (!tutorProfile)
       throw new BadRequestException('Tutor profile not found for user');
@@ -192,12 +226,35 @@ export class RequestBookingService {
     const pageSize = Math.min(100, rawSize);
     const skip = (current - 1) * pageSize;
 
-    const results = await this.requestModel
+    const resultsRaw = await this.requestModel
       .find(filter)
       .limit(pageSize)
       .skip(skip)
       .sort((sort as any) ?? { createdAt: -1 })
+      .populate({
+        path: 'parentProfileId',
+        select: 'userId',
+        populate: { path: 'userId', model: 'User', select: 'email name' },
+      })
+      .populate({ path: 'studentId', select: 'fullName' })
       .lean();
+
+    const results = (resultsRaw || []).map((doc: any) => {
+      const parentUser = doc?.parentProfileId?.userId;
+      const student = doc?.studentId;
+      return {
+        ...doc,
+        parent: parentUser
+          ? {
+              userId: String(parentUser?._id ?? ''),
+              email: parentUser?.email,
+              name: parentUser?.name,
+            }
+          : undefined,
+        student: student ? { name: student?.fullName } : undefined,
+      };
+    });
+
     const totalItems = await this.requestModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / pageSize);
     return { results, totalPages };
@@ -207,8 +264,8 @@ export class RequestBookingService {
     const { default: aqp } = await Function(
       'return import("api-query-params")',
     )();
-    const { filter: raw3 = {}, sort } = aqp(query || {});
-    const filter: Record<string, any> = { ...(raw3 as Record<string, any>) };
+    const { filter: raw = {}, sort } = aqp(query || {});
+    const filter: Record<string, any> = { ...(raw as Record<string, any>) };
     delete filter.current;
     delete filter.pageSize;
     const current = Number(query?.current) > 0 ? Number(query.current) : 1;
@@ -216,12 +273,48 @@ export class RequestBookingService {
     const pageSize = Math.min(100, rawSize);
     const skip = (current - 1) * pageSize;
 
-    const results = await this.requestModel
+    const resultsRaw = await this.requestModel
       .find(filter)
       .limit(pageSize)
       .skip(skip)
       .sort((sort as any) ?? { createdAt: -1 })
+      .populate({
+        path: 'parentProfileId',
+        select: 'userId',
+        populate: { path: 'userId', model: 'User', select: 'email name' },
+      })
+      .populate({
+        path: 'tutorProfileId',
+        select: 'userId',
+        populate: { path: 'userId', model: 'User', select: 'email name' },
+      })
+      .populate({ path: 'studentId', select: 'fullName' })
       .lean();
+
+    const results = (resultsRaw || []).map((doc: any) => {
+      const parentUser = doc?.parentProfileId?.userId;
+      const tutorUser = doc?.tutorProfileId?.userId;
+      const student = doc?.studentId;
+      return {
+        ...doc,
+        parent: parentUser
+          ? {
+              userId: String(parentUser?._id ?? ''),
+              email: parentUser?.email,
+              name: parentUser?.name,
+            }
+          : undefined,
+        tutor: tutorUser
+          ? {
+              userId: String(tutorUser?._id ?? ''),
+              email: tutorUser?.email,
+              name: tutorUser?.name,
+            }
+          : undefined,
+        student: student ? { name: student?.fullName } : undefined,
+      };
+    });
+
     const totalItems = await this.requestModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / pageSize);
     return { results, totalPages };
@@ -296,7 +389,7 @@ export class RequestBookingService {
       studentId: String(reqDoc.studentId),
       date: new Date(reqDoc.requestedDate).toISOString(),
       amount,
-      status: bookingStatus || 'pending',
+      status: bookingStatus || 'active',
     };
 
     try {
@@ -330,7 +423,38 @@ export class RequestBookingService {
         { $set: { status: 'rejected' } },
       );
 
-      return { bookingId: result._id, request: updated };
+      // Mark slot as booked (non-blocking — slot reference is optional)
+      if (reqDoc.slotId) {
+        try {
+          await this.tutorScheduleService.markSlotBooked(
+            String(reqDoc.slotId),
+            new Types.ObjectId(result._id),
+          );
+        } catch (slotErr: any) {
+          this.logger.error(
+            'markSlotBooked failed (non-fatal):',
+            slotErr?.message,
+          );
+        }
+      }
+
+      // Auto-create payment for the created booking (non-blocking policy on failure)
+      try {
+        const payment = await this.paymentsService.createForBookingOnAccept({
+          adminUserId,
+          bookingId: String(result._id),
+          amount,
+        });
+        return {
+          bookingId: result._id,
+          request: updated,
+          paymentId: payment?._id,
+        };
+      } catch (paymentError: any) {
+        this.logger.error(paymentError?.message, paymentError?.stack);
+        // Continue without failing the accept flow
+        return { bookingId: result._id, request: updated };
+      }
     } catch (error: any) {
       this.logger.error(error?.message, error?.stack);
       if (error?.response?.message) throw error; // rethrow known HttpExceptions

@@ -85,8 +85,12 @@ const SignUpPage: React.FC = () => {
       try {
         const res = await handleCreateUserAction(payload);
         if ((res as any)?.data || (res as any)?.success) {
-          setToast({ type: "success", content: "Account created" });
+          setToast({ type: "success", content: "Account created successfully! Redirecting to login..." });
           form.resetFields();
+          // Redirect to login page after 1.5 seconds
+          setTimeout(() => {
+            router.push("/login");
+          }, 1500);
         } else {
           setToast({
             type: "error",

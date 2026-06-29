@@ -12,7 +12,7 @@ import {
 import { Request } from 'express';
 import { RequestBookingService } from './request-booking.service';
 import { CreateRequestBookingsDto } from './dto/create-request-bookings.dto';
-import { ParentRole, TutorRole } from '@/decorator/roles.decorator';
+import { ParentRole, RolesAny, TutorRole } from '@/decorator/roles.decorator';
 import { MongoIdParamDto } from '@/modules/users/dto/mongo-id-param.dto';
 
 @Controller('request-bookings')
@@ -21,7 +21,7 @@ export class RequestBookingController {
   constructor(private readonly service: RequestBookingService) {}
 
   @Post()
-  @ParentRole()
+  @RolesAny('parent', 'admin')
   createMany(@Req() req: Request, @Body() dto: CreateRequestBookingsDto) {
     const user = req.user as any;
     return this.service.createMany(user.id, dto);

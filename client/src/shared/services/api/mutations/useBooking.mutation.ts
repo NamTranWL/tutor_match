@@ -22,3 +22,13 @@ export function useUpdateBookingMutation(id: string) {
     },
   });
 }
+
+export function useDeleteBookingMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => bookingService.deleteBooking(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+  });
+}

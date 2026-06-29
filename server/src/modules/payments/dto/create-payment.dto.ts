@@ -1,21 +1,23 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsEnum, IsMongoId } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsNotEmpty()
-  @IsString()
+  @IsMongoId()
   bookingId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  amount: number;
+  amount?: number;
 
   @IsNotEmpty()
-  @IsString()
-  date: string;
+  @IsEnum(['cash', 'bank_transfer', 'momo', 'vnpay', 'paypal'])
+  method: 'cash' | 'bank_transfer' | 'momo' | 'vnpay' | 'paypal';
 
-  @IsString()
-  method: string;
+  @IsOptional()
+  @IsEnum(['pending', 'paid', 'failed', 'refunded', 'cancelled'])
+  status?: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
 
+  @IsOptional()
   @IsString()
-  status?: string;
+  note?: string;
 }

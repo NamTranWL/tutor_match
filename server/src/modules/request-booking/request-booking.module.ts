@@ -21,6 +21,8 @@ import {
   StudentProfileSchema,
 } from '@/modules/student-profile/schemas/student-profile.schema';
 import { BookingsModule } from '@/modules/bookings/bookings.module';
+import { PaymentsModule } from '@/modules/payments/payments.module';
+import { TutorScheduleModule } from '@/modules/tutor-schedule/tutor-schedule.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { BookingsModule } from '@/modules/bookings/bookings.module';
       { name: StudentProfile.name, schema: StudentProfileSchema },
     ]),
     BookingsModule,
+    PaymentsModule,
+    TutorScheduleModule,
   ],
   controllers: [RequestBookingController, RequestBookingAdminController],
   providers: [RequestBookingService],

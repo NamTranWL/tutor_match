@@ -17,9 +17,17 @@ export class CreateRequestBookingsDto {
   @IsMongoId()
   studentId: string;
 
-  // Align with Booking's date field
   @IsDateString()
   requestedDate: string;
+
+  /**
+   * Optional: ID of the TutorScheduleSlot the parent selected.
+   * When provided, the system validates the slot is 'available' and
+   * belongs to the tutor. Only applicable when tutorIds has exactly 1 entry.
+   */
+  @IsOptional()
+  @IsMongoId()
+  slotId?: string;
 
   @IsOptional()
   @IsString()

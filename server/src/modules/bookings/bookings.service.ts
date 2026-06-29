@@ -154,23 +154,106 @@ export class BookingsService {
       const filter: Record<string, any> = { ...(raw as Record<string, any>) };
       delete filter.current;
       delete filter.pageSize;
+
+      // Convert string IDs to ObjectIds for proper MongoDB matching
+      if (filter.parentProfileId) {
+        filter.parentProfileId = new Types.ObjectId(filter.parentProfileId);
+      }
+      if (filter.tutorProfileId) {
+        filter.tutorProfileId = new Types.ObjectId(filter.tutorProfileId);
+      }
+      if (filter.studentId) {
+        filter.studentId = new Types.ObjectId(filter.studentId);
+      }
+
       const current = Number(query?.current) > 0 ? Number(query.current) : 1;
       const rawSize = Number(query?.pageSize) > 0 ? Number(query.pageSize) : 10;
       const pageSize = Math.min(100, rawSize);
       const skip = (current - 1) * pageSize;
 
-      const results = await this.bookingModel
+      const resultsRaw = await this.bookingModel
         .find(filter)
         .limit(pageSize)
         .skip(skip)
-        .sort((sort as any) ?? { createdAt: -1 })
+        .sort(sort as any)
+        .populate({
+          path: 'parentProfileId',
+          select: 'userId',
+          populate: { path: 'userId', model: 'User', select: 'email name' },
+        })
+        .populate({
+          path: 'tutorProfileId',
+          select: 'userId',
+          populate: { path: 'userId', model: 'User', select: 'email name' },
+        })
+        .populate({ path: 'studentId', select: 'fullName' })
         .lean();
+
+      const results = (resultsRaw || []).map((doc: any) => {
+        const parentUser = doc?.parentProfileId?.userId;
+        const tutorUser = doc?.tutorProfileId?.userId;
+        const student = doc?.studentId;
+        return {
+          ...doc,
+          parent: parentUser
+            ? {
+                userId: String(parentUser?._id ?? ''),
+                email: parentUser?.email,
+                name: parentUser?.name,
+              }
+            : undefined,
+          tutor: tutorUser
+            ? {
+                userId: String(tutorUser?._id ?? ''),
+                email: tutorUser?.email,
+                name: tutorUser?.name,
+              }
+            : undefined,
+          student: student ? { name: student?.fullName } : undefined,
+        };
+      });
       const totalItems = await this.bookingModel.countDocuments(filter);
       const totalPages = Math.ceil(totalItems / pageSize);
       return { results, totalPages };
     } catch (error: any) {
       this.logger.error(error?.message, error?.stack);
       throw new InternalServerErrorException('findAll failed');
+    }
+  }
+
+  async getStats(query: any) {
+    try {
+      const { default: aqp } = await Function(
+        'return import("api-query-params")',
+      )();
+      const { filter: raw = {} } = aqp(query || {});
+      const filter: Record<string, any> = { ...(raw as Record<string, any>) };
+      delete filter.current;
+      delete filter.pageSize;
+
+      // Convert string IDs
+      if (filter.parentProfileId)
+        filter.parentProfileId = new Types.ObjectId(filter.parentProfileId);
+      if (filter.tutorProfileId)
+        filter.tutorProfileId = new Types.ObjectId(filter.tutorProfileId);
+      if (filter.studentId)
+        filter.studentId = new Types.ObjectId(filter.studentId);
+
+      const stats = await this.bookingModel.aggregate([
+        { $match: filter },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$amount' },
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      return stats[0] || { totalAmount: 0, count: 0 };
+    } catch (error: any) {
+      this.logger.error(error?.message, error?.stack);
+      throw new InternalServerErrorException('getStats failed');
     }
   }
 

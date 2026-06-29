@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { getAccessToken, setAccessToken } from '../../stored/authToken';
-import { auth } from "@/auth";
+import { getAccessToken } from '../../stored/authToken';
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
 export const api = axios.create({
@@ -13,13 +12,8 @@ export const api = axios.create({
   withCredentials: false,
 });
 
-api.interceptors.request.use(async (config) => {
-   let token = getAccessToken();
-    if (!token) {
-      const session = await auth();
-      token = session?.user?.access_token ?? null;
-      setAccessToken(token);
-    }
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
   if (token) {
     config.headers = config.headers ?? {};
     (config.headers as Record<string, unknown>)['Authorization'] = `Bearer ${token}`;

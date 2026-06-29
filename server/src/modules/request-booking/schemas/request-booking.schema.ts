@@ -42,6 +42,10 @@ export class RequestBooking extends BaseSchema {
 
   @Prop({ type: Date, required: false })
   expiresAt?: Date;
+
+  /** Reference to the TutorScheduleSlot the parent selected */
+  @Prop({ type: Types.ObjectId, ref: 'TutorScheduleSlot', required: false })
+  slotId?: Types.ObjectId;
 }
 
 export const RequestBookingSchema =

@@ -40,12 +40,16 @@ export default function LoginPage() {
     [rawCallbackUrl]
   );
 
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const roleHome = (role?: string | null) =>
+    role === "admin" ? "/admin" : role === "tutor" ? "/tutor" : role === "parent" ? "/parent" : "/";
+
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace(callbackUrl ?? "/dashboard");
+      const role = (session?.user as any)?.role as string | undefined;
+      router.replace(callbackUrl ?? roleHome(role ?? null));
     }
-  }, [status, callbackUrl, router]);
+  }, [status, callbackUrl, router, session]);
 
   const handleResend = async () => {
     const email = form.getFieldValue("email");
@@ -97,6 +101,12 @@ export default function LoginPage() {
     const res = await authenticate(email, password);
 
     if (res.code === 1) {
+      if (callbackUrl) {
+      router.replace(callbackUrl);
+    } else {
+      const role = (res.user as any)?.role as string | undefined;
+      router.replace(roleHome(role ?? null));
+    }
       form.setFields([
         { name: "password", errors: ["Sai email hoặc mật khẩu"] },
       ]);
@@ -109,7 +119,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (res.code === 2) {
+    if (res?.code === 2) {
       setNeedActivation(true);
       form.setFields([
         {
@@ -126,7 +136,23 @@ export default function LoginPage() {
       return;
     }
 
-    router.replace(callbackUrl ?? "/dashboard");
+    // Handle generic/other errors (code 0 or any other error)
+    if (res?.code === 0 || res?.error) {
+      api.error({
+        message: "Đăng nhập thất bại",
+        description: res?.error || "Vui lòng kiểm tra lại thông tin đăng nhập",
+        placement: "topRight",
+        duration: 3,
+      });
+      return;
+    }
+
+    if (callbackUrl) {
+      router.replace(callbackUrl);
+    } else {
+      // Reload the page to ensure session is updated and let the useEffect handle role-based redirect
+      window.location.reload();
+    }
   };
 
   const onFinishFailed = () => {

@@ -1,0 +1,221 @@
+
+### Controller: app.controller.ts
+
+# GET http://localhost:8080/api/v1/ - getHello
+curl -X GET "http://localhost:8080/api/v1/"
+
+### Controller: auth\auth.controller.ts
+
+# POST http://localhost:8080/api/v1/auth/login - login
+curl -X POST "http://localhost:8080/api/v1/auth/login" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# POST http://localhost:8080/api/v1/auth/register - register
+curl -X POST "http://localhost:8080/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/auth/activate - activate
+curl -X GET "http://localhost:8080/api/v1/auth/activate"
+
+# POST http://localhost:8080/api/v1/auth/resend-activation - resendActivation
+curl -X POST "http://localhost:8080/api/v1/auth/resend-activation" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\admin-dashboard\admin-dashboard.controller.ts
+
+# GET http://localhost:8080/api/v1/admin/dashboard/overview - overview
+curl -X GET "http://localhost:8080/api/v1/admin/dashboard/overview"
+
+### Controller: modules\bookings\bookings.controller.ts
+
+# POST http://localhost:8080/api/v1/bookings/ - create
+curl -X POST "http://localhost:8080/api/v1/bookings/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/bookings/ - findAll
+curl -X GET "http://localhost:8080/api/v1/bookings/"
+
+# GET http://localhost:8080/api/v1/bookings/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/bookings/{id}"
+
+# PATCH http://localhost:8080/api/v1/bookings/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/bookings/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# DELETE http://localhost:8080/api/v1/bookings/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/bookings/{id}"
+
+### Controller: modules\parent-profile\parent-profile.controller.ts
+
+# POST http://localhost:8080/api/v1/parent-profiles/ - create
+curl -X POST "http://localhost:8080/api/v1/parent-profiles/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/parent-profiles/by-user/{userId} - findByUser
+curl -X GET "http://localhost:8080/api/v1/parent-profiles/by-user/{userId}"
+
+# GET http://localhost:8080/api/v1/parent-profiles/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/parent-profiles/{id}"
+
+# PATCH http://localhost:8080/api/v1/parent-profiles/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/parent-profiles/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\payments\payments.admin.controller.ts
+
+# GET http://localhost:8080/api/v1/admin/payments/ - list
+curl -X GET "http://localhost:8080/api/v1/admin/payments/"
+
+# POST http://localhost:8080/api/v1/admin/payments/ - create
+curl -X POST "http://localhost:8080/api/v1/admin/payments/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/admin/payments/{id} - getOne
+curl -X GET "http://localhost:8080/api/v1/admin/payments/{id}"
+
+# PATCH http://localhost:8080/api/v1/admin/payments/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/admin/payments/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\payments\payments.controller.ts
+
+# GET http://localhost:8080/api/v1/payments/ - findAll
+curl -X GET "http://localhost:8080/api/v1/payments/"
+
+# GET http://localhost:8080/api/v1/payments/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/payments/{id}"
+
+# PATCH http://localhost:8080/api/v1/payments/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/payments/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# DELETE http://localhost:8080/api/v1/payments/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/payments/{id}"
+
+### Controller: modules\request-booking\request-booking.admin.controller.ts
+
+# GET http://localhost:8080/api/v1/admin/request-bookings/ - listAll
+curl -X GET "http://localhost:8080/api/v1/admin/request-bookings/"
+
+# POST http://localhost:8080/api/v1/admin/request-bookings/{id}/accept - accept
+curl -X POST "http://localhost:8080/api/v1/admin/request-bookings/{id}/accept" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# POST http://localhost:8080/api/v1/admin/request-bookings/{id}/reject - reject
+curl -X POST "http://localhost:8080/api/v1/admin/request-bookings/{id}/reject" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\request-booking\request-booking.controller.ts
+
+# POST http://localhost:8080/api/v1/request-bookings/ - createMany
+curl -X POST "http://localhost:8080/api/v1/request-bookings/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/request-bookings/my - listMine
+curl -X GET "http://localhost:8080/api/v1/request-bookings/my"
+
+# GET http://localhost:8080/api/v1/request-bookings/for-me - listForTutor
+curl -X GET "http://localhost:8080/api/v1/request-bookings/for-me"
+
+# POST http://localhost:8080/api/v1/request-bookings/{id}/cancel - cancel
+curl -X POST "http://localhost:8080/api/v1/request-bookings/{id}/cancel" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\reviews\reviews.controller.ts
+
+# POST http://localhost:8080/api/v1/reviews/ - create
+curl -X POST "http://localhost:8080/api/v1/reviews/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/reviews/ - findAll
+curl -X GET "http://localhost:8080/api/v1/reviews/"
+
+# GET http://localhost:8080/api/v1/reviews/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/reviews/{id}"
+
+# PATCH http://localhost:8080/api/v1/reviews/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/reviews/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# DELETE http://localhost:8080/api/v1/reviews/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/reviews/{id}"
+
+### Controller: modules\student-profile\student-profile.controller.ts
+
+# POST http://localhost:8080/api/v1/student-profiles/ - create
+curl -X POST "http://localhost:8080/api/v1/student-profiles/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/student-profiles/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/student-profiles/{id}"
+
+# GET http://localhost:8080/api/v1/student-profiles/by-parent/{parentId} - findByParent
+curl -X GET "http://localhost:8080/api/v1/student-profiles/by-parent/{parentId}"
+
+# PATCH http://localhost:8080/api/v1/student-profiles/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/student-profiles/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+### Controller: modules\tutor\tutor-profile.controller.ts
+
+# POST http://localhost:8080/api/v1/tutor/ - create
+curl -X POST "http://localhost:8080/api/v1/tutor/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/tutor/ - findAll
+curl -X GET "http://localhost:8080/api/v1/tutor/"
+
+# GET http://localhost:8080/api/v1/tutor/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/tutor/{id}"
+
+# PATCH http://localhost:8080/api/v1/tutor/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/tutor/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# DELETE http://localhost:8080/api/v1/tutor/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/tutor/{id}"
+
+### Controller: modules\users\users.controller.ts
+
+# POST http://localhost:8080/api/v1/users/ - create
+curl -X POST "http://localhost:8080/api/v1/users/" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# GET http://localhost:8080/api/v1/users/ - findAll
+curl -X GET "http://localhost:8080/api/v1/users/"
+
+# GET http://localhost:8080/api/v1/users/{id} - findOne
+curl -X GET "http://localhost:8080/api/v1/users/{id}"
+
+# PATCH http://localhost:8080/api/v1/users/{id} - update
+curl -X PATCH "http://localhost:8080/api/v1/users/{id}" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# DELETE http://localhost:8080/api/v1/users/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/users/{id}"
+
+# DELETE http://localhost:8080/api/v1/users/{id} - remove
+curl -X DELETE "http://localhost:8080/api/v1/users/{id}"

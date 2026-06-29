@@ -25,8 +25,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
   private buildActivationLink(code: string) {
-    const base = process.env.API_BASE_URL.replace(/\/?$/, '/');
-    const url = new URL('auth/activate', base);
+    const base = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+    const url = new URL('/activate', base);
     url.searchParams.set('code', code);
     return url.toString();
   }

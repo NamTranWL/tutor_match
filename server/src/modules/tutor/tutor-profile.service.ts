@@ -163,6 +163,17 @@ export class TutorProfileService {
   }
 
   /* ------------------------- Single ------------------------- */
+  async findByUserId(userId: string) {
+    const doc = await this.tpModel
+      .findOne({ userId: new Types.ObjectId(userId) })
+      .lean();
+    // Do NOT throw if not found, let frontend handle null (or throw if preferred, strict me endpoint might throw)
+    // If we throw, frontend receives 404 and knows to create.
+    if (!doc)
+      throw new NotFoundException('Tutor profile not found for this user');
+    return doc;
+  }
+
   async findOne(id: string) {
     const doc = await this.tpModel.findById(id).lean();
     if (!doc) throw new NotFoundException('Tutor profile not found.');
@@ -187,8 +198,8 @@ export class TutorProfileService {
     if (dto.currency !== undefined) update.currency = dto.currency;
     if (dto.mode !== undefined) update.mode = dto.mode;
     if (dto.isVerified !== undefined) update.isVerified = dto.isVerified;
-    if (dto.nextAvailableAt !== undefined)
-      update.nextAvailableAt = dto.nextAvailableAt;
+    if (dto.weeklyAvailability !== undefined)
+      update.weeklyAvailability = dto.weeklyAvailability;
     if (dto.experience !== undefined) update.experience = dto.experience;
     if (dto.certificates !== undefined) update.certificates = dto.certificates;
 

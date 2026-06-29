@@ -12,15 +12,35 @@ export class Payment extends BaseSchema {
   @Prop({ required: true })
   amount: number;
 
-  @Prop({ required: true })
-  date: Date;
+  @Prop({
+    enum: ['cash', 'bank_transfer', 'momo', 'vnpay', 'paypal'],
+    default: 'cash',
+  })
+  method: 'cash' | 'bank_transfer' | 'momo' | 'vnpay' | 'paypal';
 
-  @Prop() method: string;
+  @Prop({
+    enum: ['pending', 'paid', 'failed', 'refunded', 'cancelled'],
+    default: 'pending',
+  })
+  status: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
 
-  @Prop({ enum: ['paid', 'refunded', 'failed'], default: 'paid' })
-  status: 'paid' | 'refunded' | 'failed';
+  @Prop({ type: Date })
+  paidAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  createdBy?: Types.ObjectId;
+
+  @Prop()
+  note?: string;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
-PaymentSchema.index({ bookingId: 1 });
-PaymentSchema.index({ date: -1 });
+// Enforce one payment per booking to prevent duplicates on accept flow
+PaymentSchema.index({ bookingId: 1 }, { unique: true });
+PaymentSchema.index({ status: 1, createdAt: -1 });
+// Optional unique index to prevent multiple PAID for the same booking
+// Uncomment if business requires strict uniqueness
+// PaymentSchema.index(
+//   { bookingId: 1, status: 1 },
+//   { unique: true, partialFilterExpression: { status: 'paid' } },
+// );

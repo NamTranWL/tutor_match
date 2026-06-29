@@ -7,19 +7,23 @@ import {
   Patch,
   Post,
   Query,
+  Request,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { TutorProfileService } from './tutor-profile.service';
 import { CreateTutorProfileDto } from './dto/create-tutor-profile.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { MongoIdParamDto } from './dto/mongo-id-param.dto';
+import { JwtAuthGuard } from '@/auth/passport/jwt-auth.guard';
 import {
   AdminRole,
   TutorRole,
   ParentRole,
   RolesAny,
 } from '@/decorator/roles.decorator';
+import { Public } from '@/decorator/customize';
 
 @Controller('tutor')
 @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
@@ -31,7 +35,16 @@ export class TutorProfileController {
     return this.service.create(dto);
   }
 
-  @AdminRole()
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Request() req: any) {
+    // Requires User to be attached to Request (via JwtAuthGuard)
+    return this.service.findByUserId(
+      req.user.id || req.user.userId || req.user._id,
+    );
+  }
+
+  @Public()
   @Get()
   findAll(
     @Query()

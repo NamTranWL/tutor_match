@@ -16,3 +16,11 @@ export const usersKeys = {
   listIncludeDeleted: (params: unknown) => ['users', 'list', 'includeDeleted', params] as const,
   detail: (id: string) => ['users', 'detail', id] as const,
 };
+
+export const queryKeys = {
+  parentProfile: {
+    all: ['parentProfile'] as const,
+    byUser: (userId: string) => ['parentProfile', 'byUser', userId] as const,
+    detail: (id: string) => ['parentProfile', 'detail', id] as const,
+  },
+};

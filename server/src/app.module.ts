@@ -21,6 +21,8 @@ import { ReviewsModule } from '@/modules/reviews/reviews.module';
 import { ParentProfileModule } from '@/modules/parent-profile/parent-profile.module';
 import { StudentProfileModule } from '@/modules/student-profile/student-profile.module';
 import { RequestBookingModule } from '@/modules/request-booking/request-booking.module';
+import { AdminDashboardModule } from '@/modules/admin-dashboard/admin-dashboard.module';
+import { TutorScheduleModule } from '@/modules/tutor-schedule/tutor-schedule.module';
 
 @Module({
   imports: [
@@ -74,6 +76,8 @@ import { RequestBookingModule } from '@/modules/request-booking/request-booking.
     PaymentsModule,
     ReviewsModule,
     RequestBookingModule,
+    AdminDashboardModule,
+    TutorScheduleModule,
   ],
   controllers: [AppController],
   providers: [

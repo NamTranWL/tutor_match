@@ -23,7 +23,8 @@ import { MongooseModule } from '@nestjs/mongoose';
         global: true,
         secret: config.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get<string>('JWT_ACCESS_EXPIRATION') ?? '1d',
+          expiresIn: (config.get<string>('JWT_ACCESS_EXPIRATION') ??
+            '1d') as any,
         },
       }),
     }),

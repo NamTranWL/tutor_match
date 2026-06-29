@@ -49,8 +49,11 @@ const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
+      // If a specific URL is requested, honor it
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (new URL(url).origin === baseUrl) return url;
+      
+      // Default redirect - will be overridden by role-based logic in login page
       return baseUrl + "/";
     },
     jwt({ token, user }) {

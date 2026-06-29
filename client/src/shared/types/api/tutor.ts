@@ -8,6 +8,24 @@ export interface GeoPoint {
   coordinates: [number, number];
 }
 
+export interface WeeklyAvailabilitySlot {
+  dayOfWeek: number; // 0=Sun, 1=Mon, …, 6=Sat
+  startHour: number;
+  endHour: number;
+}
+
+export interface TutorScheduleSlot {
+  _id: string;
+  tutorProfileId: string;
+  date: string; // ISO string
+  startHour: number;
+  endHour: number;
+  status: 'available' | 'booked' | 'blocked';
+  bookingId?: string;
+  note?: string;
+  createdAt?: string;
+}
+
 export interface TutorProfile {
   _id: string;
   userId: string;
@@ -23,6 +41,7 @@ export interface TutorProfile {
   isVerified: boolean;
   ratingAvg?: number;
   ratingCount?: number;
+  weeklyAvailability?: WeeklyAvailabilitySlot[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -40,6 +59,8 @@ export interface TutorListParams {
   maxDistanceKm?: number;
   page?: number;
   limit?: number;
+  current?: number;
+  pageSize?: number;
   sort?: 'rating' | 'price_asc' | 'price_desc' | 'newest' | 'oldest';
 }
 
@@ -51,9 +72,11 @@ export interface TutorListResponseMeta {
 }
 
 export interface TutorListResponse {
-  items: TutorProfile[];
+  results: TutorProfile[]; // Changed from items
   total: number;
-  page: number;
-  limit: number;
-  pages: number;
+  page?: number;
+  limit?: number;
+  current?: number;
+  pageSize?: number;
+  totalPages: number; // Changed from pages
 }

@@ -4,10 +4,12 @@ import {
   IsBoolean,
   IsDate,
   IsEnum,
+  IsInt,
   IsMongoId,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
   ValidateNested,
   IsUrl,
@@ -32,6 +34,23 @@ export class LocationDto {
   @IsArray()
   @IsNumber({}, { each: true })
   coordinates!: [number, number];
+}
+
+export class WeeklyAvailabilitySlotDto {
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  dayOfWeek: number;
+
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  startHour: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  endHour: number;
 }
 
 export class ExperienceItemDto {
@@ -115,9 +134,10 @@ export class CreateTutorProfileDto {
   isVerified?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => (value ? new Date(value) : value))
-  @IsDate()
-  nextAvailableAt?: Date;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WeeklyAvailabilitySlotDto)
+  weeklyAvailability?: WeeklyAvailabilitySlotDto[];
 
   @IsOptional()
   @IsArray()

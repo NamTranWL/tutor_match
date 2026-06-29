@@ -23,7 +23,7 @@ export class ParentProfileService {
   async create(dto: CreateParentProfileDto) {
     try {
       const doc = await this.model.create({
-        userId: new Types.ObjectId(dto.userId),
+        userId: dto.userId,
         fullName: dto.fullName,
         phone: dto.phone,
         address: dto.address,
@@ -38,7 +38,7 @@ export class ParentProfileService {
   }
 
   async findByUserId(userId: string) {
-    return this.model.findOne({ userId: new Types.ObjectId(userId) }).lean();
+    return this.model.findOne({ userId }).lean();
   }
 
   async findOne(id: string) {

@@ -41,7 +41,22 @@ export class TutorProfile extends BaseSchema {
   @Prop({ default: 0 }) ratingAvg: number;
   @Prop({ default: 0 }) ratingCount: number;
 
-  @Prop() nextAvailableAt?: Date;
+  /**
+   * Recurring weekly availability blocks.
+   * dayOfWeek: 0=Sun, 1=Mon, …, 6=Sat
+   * startHour/endHour: 0–23 / 1–24
+   */
+  @Prop({
+    type: [
+      {
+        dayOfWeek: { type: Number, min: 0, max: 6, required: true },
+        startHour: { type: Number, min: 0, max: 23, required: true },
+        endHour: { type: Number, min: 1, max: 24, required: true },
+      },
+    ],
+    default: [],
+  })
+  weeklyAvailability: { dayOfWeek: number; startHour: number; endHour: number }[];
 
   @Prop({
     type: [{ title: String, org: String, from: Date, to: Date }],

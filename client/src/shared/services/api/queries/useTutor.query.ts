@@ -10,6 +10,9 @@ export function useTutorListQuery(params: TutorListParams) {
   });
 }
 
+// Alias for consistency
+export const useTutorList = useTutorListQuery;
+
 export function useTutorDetailQuery(tutorId: string) {
   return useQuery({
     queryKey: tutorKeys.detail(tutorId),
@@ -17,3 +20,7 @@ export function useTutorDetailQuery(tutorId: string) {
     enabled: !!tutorId,
   });
 }
+
+// Alias for consistency
+export const useTutorDetail = useTutorDetailQuery;
+
